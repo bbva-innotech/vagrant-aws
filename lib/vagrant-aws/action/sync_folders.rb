@@ -76,22 +76,12 @@ module VagrantPlugins
             excludes = ['.vagrant/', 'Vagrantfile', *Array(data[:rsync_excludes])].uniq
 
             # Rsync over to the guest path using the SSH info
-
-            command = ["rsync"]
-            command.push("--rsync-path=sudo rsync") if not ssh_info[:username].eql?"root"
-            command.push("--verbose", "--archive", "-z",
-              "--exclude", ".vagrant/", "--exclude", "Vagrantfile",
-              "-e", "ssh -p #{ssh_info[:port]} -o StrictHostKeyChecking=no -i '#{ssh_info[:private_key_path]}'",
+            command = [
+              "rsync", "--verbose", "--archive", "-z",
+              *excludes.map{|e|['--exclude', e]}.flatten,
+              "-e", "ssh -p #{ssh_info[:port]} -o StrictHostKeyChecking=no #{ssh_key_options(ssh_info)}",
               hostpath,
-              "#{ssh_info[:username]}@#{ssh_info[:host]}:#{guestpath}"])
-
-            # Rsync over to the guest path using the SSH info
-            #command = [
-            #  "rsync", "--verbose", "--archive", "-z",
-            #  "--exclude", ".vagrant/",
-            #  "-e", "ssh -p #{ssh_info[:port]} -o StrictHostKeyChecking=no -i '#{ssh_info[:private_key_path]}'",
-            #  hostpath,
-            #  "#{ssh_info[:username]}@#{ssh_info[:host]}:#{guestpath}"]
+              "#{ssh_info[:username]}@#{ssh_info[:host]}:#{guestpath}"]
 
             # we need to fix permissions when using rsync.exe on windows, see
             # http://stackoverflow.com/questions/5798807/rsync-permission-denied-created-directories-have-no-permissions
