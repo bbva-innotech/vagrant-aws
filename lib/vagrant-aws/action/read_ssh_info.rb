@@ -33,7 +33,17 @@ module VagrantPlugins
           ssh_host_attribute = machine.provider_config.
               get_region_config(machine.provider_config.region).ssh_host_attribute
           # default host attributes to try. NOTE: Order matters!
-          ssh_attrs = [:private_ip_address, :dns_name, :public_ip_addres]
+          
+          if ENV['VAGRANT_USE_PUBLIC_IP'] == "true"
+            puts "Use public ip first"
+            ssh_attrs = [:public_ip_address, :dns_name, :private_ip_address]
+          else
+            puts "Use private ip first"
+            ssh_attrs = [:private_ip_address, :dns_name, :public_ip_address]
+          end
+          
+          puts "SSH_ATTRS:",ssh_attrs
+          
           ssh_attrs = (Array(ssh_host_attribute) + ssh_attrs).uniq if ssh_host_attribute
           # try each attribute, get out on first value
           host_value = nil
@@ -44,7 +54,7 @@ module VagrantPlugins
               @logger.info("SSH host attribute not found #{attr_name}")
             end
           end
-
+          puts "Using IP " + host_value
           return { :host => host_value, :port => 22 }
         end
       end
